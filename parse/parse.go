@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"robpike.io/ivy/exec"
 	"robpike.io/ivy/scan"
@@ -468,7 +469,7 @@ func (p *Parser) operand(tok scan.Token, indexOK bool) value.Expr {
 			right: p.expr(),
 		}
 	case scan.Identifier:
-		if p.context.DefinedUnary(tok.Text) {
+		if p.context.DefinedUnary(strings.Trim(tok.Text, "@")) {
 			expr = &unary{
 				op:    tok.Text,
 				right: p.expr(),
