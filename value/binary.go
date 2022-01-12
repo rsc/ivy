@@ -188,7 +188,7 @@ func andBool(t Value) bool {
 		}
 		return true
 	}
-	return t.(Int) == one
+	return t.(Int) == Int(1)
 }
 
 var BinaryOps = make(map[string]BinaryOp)
@@ -221,6 +221,12 @@ func init() {
 			whichType:   binaryArithType,
 			fn: [numType]binaryFn{
 				intType: func(c Context, u, v Value) Value {
+					if u.(Int) == 0 {
+						return v
+					}
+					if v.(Int) == 0 {
+						return u
+					}
 					return (u.(Int) + v.(Int)).maybeBig()
 				},
 				bigIntType: func(c Context, u, v Value) Value {
@@ -271,6 +277,12 @@ func init() {
 			whichType:   binaryArithType,
 			fn: [numType]binaryFn{
 				intType: func(c Context, u, v Value) Value {
+					if u.(Int) == 1 || v.(Int) == 0 {
+						return v
+					}
+					if v.(Int) == 1 || u.(Int) == 0 {
+						return u
+					}
 					return (u.(Int) * v.(Int)).maybeBig()
 				},
 				bigIntType: func(c Context, u, v Value) Value {
