@@ -159,3 +159,15 @@ x = 4 4 rho 0; y = 4 4; x[y[1]; y[2]] = 3; x
 	0 0 0 0
 	0 0 0 0
 	0 0 0 3
+
+# Order of evaluation
+tags = 0 rho 0
+op f tag = tags; tags = tags, tag; 1
+op order x = x = tags; tags = 0 rho 0; x
+m = 1 1 rho 0
+order (f 1) + (f 2)
+order +/ (f 1) (f 2)
+order m[f 1; f 2]
+	2 1
+	1 2
+	2 1
