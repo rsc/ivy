@@ -7,6 +7,8 @@ package value
 import (
 	"fmt"
 	"math/big"
+	"os"
+	"strings"
 	"unicode/utf8"
 )
 
@@ -125,6 +127,57 @@ var UnaryOps = make(map[string]UnaryOp)
 func printValue(c Context, v Value) Value {
 	fmt.Printf("%s\n\n", v.Sprint(c.Config()))
 	return v
+}
+
+func readFile(c Context, file string) Value {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		Errorf("%v", err)
+	}
+	var vecs []Vector
+	for _, line := range strings.Split(string(data), "\n") {
+		v := IvyEval(c, line)
+		if vec, ok := v.(Vector); ok {
+			if len(vec) == 0 {
+				continue
+			}
+			vecs = append(vecs, vec)
+		} else {
+			vecs = append(vecs, Vector{v})
+		}
+	}
+	if len(vecs) == 0 {
+		return Vector{}
+	}
+	if len(vecs) == 1 {
+		v := vecs[0]
+		if len(v) == 1 {
+			return v[0]
+		}
+		return v
+	}
+	n := 0
+	for i, vec := range vecs {
+		if i == 0 {
+			n = len(vec)
+		} else if n != len(vec) {
+			n = -1
+			break
+		}
+	}
+	if n > 0 {
+		m := &Matrix{shape: []int{len(vecs), n}}
+		for _, vec := range vecs {
+			m.data = append(m.data, vec...)
+		}
+		return m
+	}
+
+	var all Vector
+	for _, vec := range vecs {
+		all = append(all, vec)
+	}
+	return all
 }
 
 func init() {
@@ -1082,6 +1135,24 @@ func init() {
 					}
 					str, _ := text.oneLineSprint(c.Config(), !withParens, !withSpaces)
 					return IvyEval(c, str)
+				},
+			},
+		},
+
+		{
+			name: "read",
+			fn: [numType]unaryFn{
+				charType: func(c Context, v Value) Value {
+					char := v.(Char)
+					return readFile(c, string(char))
+				},
+				vectorType: func(c Context, v Value) Value {
+					text := v.(Vector)
+					if !text.AllChars() {
+						Errorf("ivy: value is not a vector of char")
+					}
+					str, _ := text.oneLineSprint(c.Config(), !withParens, !withSpaces)
+					return readFile(c, str)
 				},
 			},
 		},
