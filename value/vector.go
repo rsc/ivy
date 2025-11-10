@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"unicode/utf8"
 
 	"robpike.io/ivy/config"
 	"robpike.io/ivy/value/persist"
@@ -156,7 +157,7 @@ func (v *Vector) cells(conf *config.Config, ncol int) ([][]string, *widths) {
 			cell = strings.Split(elem.Sprint(conf), "\n")
 		}
 		for _, line := range cell {
-			w.addColumn(i%ncol, len(line))
+			w.addColumn(i%ncol, utf8.RuneCountInString(line))
 		}
 		out = append(out, cell)
 	}
@@ -178,15 +179,16 @@ func formatRow(cells [][]string, width *widths) []string {
 		blank := 0
 		for col, cell := range cells {
 			s := ""
-			if h < len(cell) {
-				s = cell[h]
+			i := h - (height-len(cell))/2
+			if 0 <= i && i < len(cell) {
+				s = cell[i]
 			}
 			// TODO blank trimming
 			if s == "" {
 				blank += width.column(col) + 1
 				continue
 			}
-			b.WriteString(blanks(blank + width.column(col) - len(s)))
+			b.WriteString(blanks(blank + width.column(col) - utf8.RuneCountInString(s)))
 			b.WriteString(s)
 			blank = 1
 		}

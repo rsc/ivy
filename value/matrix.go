@@ -11,6 +11,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"robpike.io/ivy/config"
 )
@@ -1111,8 +1112,8 @@ func (m *Matrix) inverse(c Context) Value {
 }
 
 var (
-	vectorCorners = []string{`(`, `)`, `(`, `|`, `|`, `)`}
-	matrixCorners = []string{`(`, `)`, `(`, `|`, `|`, `)`}
+	vectorCorners = []string{`(`, `)`, `╭`, `╮`, `╰`, `╯`}
+	matrixCorners = []string{`[`, `]`, `┌`, `┐`, `└`, `┘`}
 )
 
 func drawBox(lines, corners []string) []string {
@@ -1128,17 +1129,13 @@ func drawBox(lines, corners []string) []string {
 
 	wid := 0
 	for _, line := range lines {
-		wid = max(wid, len(line))
+		wid = max(wid, utf8.RuneCountInString(line))
 	}
 	var boxed []string
-	for i, line := range lines {
-		start, end := "|", "|"
-		if i == 0 {
-			start, end = corners[2], corners[3]
-		} else if i == len(lines)-1 {
-			start, end = corners[4], corners[5]
-		}
-		boxed = append(boxed, start+line+blanks(wid-len(line))+end)
+	boxed = append(boxed, corners[2]+blanks(wid)+corners[3])
+	for _, line := range lines {
+		boxed = append(boxed, "│"+line+blanks(wid-utf8.RuneCountInString(line))+"│")
 	}
+	boxed = append(boxed, corners[4]+blanks(wid)+corners[5])
 	return boxed
 }
