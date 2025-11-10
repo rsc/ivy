@@ -1132,10 +1132,20 @@ func drawBox(lines, corners []string) []string {
 		wid = max(wid, utf8.RuneCountInString(line))
 	}
 	var boxed []string
-	boxed = append(boxed, corners[2]+blanks(wid)+corners[3])
-	for _, line := range lines {
-		boxed = append(boxed, "│"+line+blanks(wid-utf8.RuneCountInString(line))+"│")
+	if strings.Trim(lines[0], " ()╭╮[]┌┐") == "" && strings.Trim(lines[len(lines)-1], " ()╰╯[]└┘") == "" {
+		line := lines[0]
+		boxed = append(boxed, corners[2]+line+blanks(wid-utf8.RuneCountInString(line))+corners[3])
+		for _, line := range lines[1 : len(lines)-1] {
+			boxed = append(boxed, "│"+line+blanks(wid-utf8.RuneCountInString(line))+"│")
+		}
+		line = lines[len(lines)-1]
+		boxed = append(boxed, corners[4]+line+blanks(wid-utf8.RuneCountInString(line))+corners[5])
+	} else {
+		boxed = append(boxed, corners[2]+blanks(wid)+corners[3])
+		for _, line := range lines {
+			boxed = append(boxed, "│"+line+blanks(wid-utf8.RuneCountInString(line))+"│")
+		}
+		boxed = append(boxed, corners[4]+blanks(wid)+corners[5])
 	}
-	boxed = append(boxed, corners[4]+blanks(wid)+corners[5])
 	return boxed
 }
