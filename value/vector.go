@@ -167,23 +167,44 @@ func (v *Vector) cells(conf *config.Config, ncol int) ([][]string, *widths) {
 // formatRow formats a row of cells, aligning to the widths in width.
 // It returns the lines of output for that row.
 func formatRow(cells [][]string, width *widths) []string {
+	heading := false
+	head := make([]int, len(cells))
+	for col, cell := range cells {
+		if len(cell) > 0 && isHead(cell[0]) {
+			heading = true
+			head[col] = 1
+		}
+	}
 	height := 1
-	for _, cell := range cells {
-		height = max(height, len(cell))
+	for col, cell := range cells {
+		height = max(height, len(cell)-head[col])
 	}
 
 	// Concatenate each line of each cell into a line of the row.
 	var lines []string
+	if heading {
+		var b strings.Builder
+		blank := 0
+		for col, cell := range cells {
+			if head[col] == 0 {
+				blank += width.column(col) + 1
+				continue
+			}
+			s := cell[0]
+			b.WriteString(blanks(blank + width.column(col) - utf8.RuneCountInString(s)))
+			b.WriteString(s)
+			blank = 1
+		}
+		lines = append(lines, b.String())
+	}
 	for h := range height {
 		var b strings.Builder
 		blank := 0
 		for col, cell := range cells {
 			s := ""
-			i := h - (height-len(cell))/2
-			if 0 <= i && i < len(cell) {
-				s = cell[i]
+			if h+head[col] < len(cell) {
+				s = cell[h+head[col]]
 			}
-			// TODO blank trimming
 			if s == "" {
 				blank += width.column(col) + 1
 				continue
@@ -195,6 +216,57 @@ func formatRow(cells [][]string, width *widths) []string {
 		lines = append(lines, b.String())
 	}
 	return lines
+}
+
+func isHead(line string) bool {
+	return strings.Trim(line, " ╭╮┌┐") == ""
+}
+
+func isTail(line string) bool {
+	return strings.Trim(line, " ╰╯└┘") == ""
+}
+
+var (
+	vectorCorners = []string{`(`, `)`, `╭`, `╮`, `╰`, `╯`}
+	matrixCorners = []string{`[`, `]`, `┌`, `┐`, `└`, `┘`}
+)
+
+func drawBox(lines, corners []string) []string {
+	if corners == nil {
+		return lines
+	}
+	switch len(lines) {
+	case 0:
+		return []string{corners[0] + corners[1]}
+	case 1:
+		if corners[0] == "(" {
+			// Common case: one-line vector uses ordinary parens.
+			return []string{corners[0] + lines[0] + corners[1]}
+		}
+	}
+	wid := 0
+	for _, line := range lines {
+		wid = max(wid, utf8.RuneCountInString(line))
+	}
+	var boxed []string
+	if len(lines) >= 2 && isHead(lines[0]) && isTail(lines[len(lines)-1]) {
+		// Add corners to existing head/tail lines to limit nested vertical expansion.
+		line := lines[0]
+		boxed = append(boxed, corners[2]+line+blanks(wid-utf8.RuneCountInString(line))+corners[3])
+		for _, line := range lines[1 : len(lines)-1] {
+			boxed = append(boxed, "│"+line+blanks(wid-utf8.RuneCountInString(line))+"│")
+		}
+		line = lines[len(lines)-1]
+		boxed = append(boxed, corners[4]+line+blanks(wid-utf8.RuneCountInString(line))+corners[5])
+	} else {
+		// Add new head and tail lines for the corners.
+		boxed = append(boxed, corners[2]+blanks(wid)+corners[3])
+		for _, line := range lines {
+			boxed = append(boxed, "│"+line+blanks(wid-utf8.RuneCountInString(line))+"│")
+		}
+		boxed = append(boxed, corners[4]+blanks(wid)+corners[5])
+	}
+	return boxed
 }
 
 var (

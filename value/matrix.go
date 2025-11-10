@@ -11,7 +11,6 @@ import (
 	"slices"
 	"sort"
 	"strings"
-	"unicode/utf8"
 
 	"robpike.io/ivy/config"
 )
@@ -1109,43 +1108,4 @@ func (m *Matrix) inverse(c Context) Value {
 		data.Append(row[dim:]...)
 	}
 	return NewMatrix(m.shape, data.Publish())
-}
-
-var (
-	vectorCorners = []string{`(`, `)`, `╭`, `╮`, `╰`, `╯`}
-	matrixCorners = []string{`[`, `]`, `┌`, `┐`, `└`, `┘`}
-)
-
-func drawBox(lines, corners []string) []string {
-	if corners == nil {
-		return lines
-	}
-	switch len(lines) {
-	case 0:
-		return []string{corners[0] + corners[1]}
-	case 1:
-		return []string{corners[0] + lines[0] + corners[1]}
-	}
-
-	wid := 0
-	for _, line := range lines {
-		wid = max(wid, utf8.RuneCountInString(line))
-	}
-	var boxed []string
-	if strings.Trim(lines[0], " ()╭╮[]┌┐") == "" && strings.Trim(lines[len(lines)-1], " ()╰╯[]└┘") == "" {
-		line := lines[0]
-		boxed = append(boxed, corners[2]+line+blanks(wid-utf8.RuneCountInString(line))+corners[3])
-		for _, line := range lines[1 : len(lines)-1] {
-			boxed = append(boxed, "│"+line+blanks(wid-utf8.RuneCountInString(line))+"│")
-		}
-		line = lines[len(lines)-1]
-		boxed = append(boxed, corners[4]+line+blanks(wid-utf8.RuneCountInString(line))+corners[5])
-	} else {
-		boxed = append(boxed, corners[2]+blanks(wid)+corners[3])
-		for _, line := range lines {
-			boxed = append(boxed, "│"+line+blanks(wid-utf8.RuneCountInString(line))+"│")
-		}
-		boxed = append(boxed, corners[4]+blanks(wid)+corners[5])
-	}
-	return boxed
 }
