@@ -219,11 +219,11 @@ func formatRow(cells [][]string, width *widths) []string {
 }
 
 func isHead(line string) bool {
-	return strings.Trim(line, " ╭╮┌┐") == ""
+	return strings.Trim(line, " ╭╮┌┐") == "" && strings.ContainsAny(line, "╭╮┌┐")
 }
 
 func isTail(line string) bool {
-	return strings.Trim(line, " ╰╯└┘") == ""
+	return strings.Trim(line, " ╰╯└┘") == "" && strings.ContainsAny(line, "╰╯└┘")
 }
 
 var (
