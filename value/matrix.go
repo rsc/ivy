@@ -202,14 +202,11 @@ func (m *Matrix) sprint(conf *config.Config) []string {
 		cells, width := m.data.cells(conf, ncols)
 		var lines []string
 		for i := range n2d {
-			if i > 0 {
-				lines = append(lines, "")
-			}
 			m := Matrix{
 				shape: m.shape[1:],
 				// no data; write2d uses cells, not data
 			}
-			lines = append(lines, m.write2d(cells[i*size:(i+1)*size], ncols, nested, width)...)
+			lines = append(lines, drawBox(m.write2d(cells[i*size:(i+1)*size], ncols, nested, width), matrixCorners)...)
 		}
 		return lines
 	default:
